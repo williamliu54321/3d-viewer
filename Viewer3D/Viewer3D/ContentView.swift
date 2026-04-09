@@ -11,6 +11,14 @@ enum MeshStyle: String, CaseIterable {
     case chrome = "Chrome"
     case neon = "Neon"
     case glitch = "Glitch"
+    case roseGold = "Rose Gold"
+    case crystal = "Crystal"
+    case aurora = "Aurora"
+    case pearl = "Pearl"
+    case galaxy = "Galaxy"
+    case sunset = "Sunset"
+    case lavender = "Lavender"
+    case cherryBlossom = "Cherry Blossom"
 }
 
 struct ContentView: View {
@@ -464,6 +472,85 @@ class SceneViewModel: ObservableObject {
                 material.isDoubleSided = true
                 material.transparency = 0.9
                 node.opacity = 0.95
+
+            case .roseGold:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 0.92, green: 0.7, blue: 0.65, alpha: 1.0)
+                material.metalness.contents = 0.9
+                material.roughness.contents = 0.25
+                material.emission.contents = UIColor(red: 0.3, green: 0.15, blue: 0.12, alpha: 1.0)
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .crystal:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 0.95, green: 0.95, blue: 1.0, alpha: 0.6)
+                material.metalness.contents = 0.1
+                material.roughness.contents = 0.0
+                material.emission.contents = UIColor(red: 0.8, green: 0.85, blue: 1.0, alpha: 0.3)
+                material.transparent.contents = UIColor(white: 1.0, alpha: 0.5)
+                material.fresnelExponent = 2.0
+                material.isDoubleSided = true
+                material.blendMode = .alpha
+                node.opacity = 0.85
+
+            case .aurora:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.2, green: 0.1, blue: 0.3, alpha: 1.0)
+                material.emission.contents = UIColor(red: 0.4, green: 0.8, blue: 0.7, alpha: 1.0)
+                material.transparent.contents = UIColor(red: 0.6, green: 0.3, blue: 0.8, alpha: 0.7)
+                material.fresnelExponent = 2.5
+                material.isDoubleSided = true
+                material.blendMode = .add
+                node.opacity = 0.9
+
+            case .pearl:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 0.98, green: 0.96, blue: 0.94, alpha: 1.0)
+                material.metalness.contents = 0.3
+                material.roughness.contents = 0.15
+                material.emission.contents = UIColor(red: 0.95, green: 0.9, blue: 0.92, alpha: 0.2)
+                material.fresnelExponent = 4.0
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .galaxy:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.1, green: 0.05, blue: 0.2, alpha: 1.0)
+                material.emission.contents = UIColor(red: 0.5, green: 0.2, blue: 0.8, alpha: 1.0)
+                material.transparent.contents = UIColor(red: 0.2, green: 0.1, blue: 0.4, alpha: 0.8)
+                material.fresnelExponent = 3.0
+                material.isDoubleSided = true
+                node.opacity = 0.95
+
+            case .sunset:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 1.0, green: 0.6, blue: 0.4, alpha: 1.0)
+                material.emission.contents = UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 0.4)
+                material.metalness.contents = 0.2
+                material.roughness.contents = 0.5
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .lavender:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 0.85, green: 0.75, blue: 0.95, alpha: 1.0)
+                material.emission.contents = UIColor(red: 0.6, green: 0.5, blue: 0.8, alpha: 0.3)
+                material.metalness.contents = 0.1
+                material.roughness.contents = 0.4
+                material.fresnelExponent = 2.0
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .cherryBlossom:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 1.0, green: 0.85, blue: 0.88, alpha: 1.0)
+                material.emission.contents = UIColor(red: 1.0, green: 0.6, blue: 0.7, alpha: 0.35)
+                material.metalness.contents = 0.05
+                material.roughness.contents = 0.35
+                material.fresnelExponent = 1.5
+                material.isDoubleSided = true
+                node.opacity = 1.0
             }
 
             geometry.materials = [material]
@@ -477,6 +564,22 @@ class SceneViewModel: ObservableObject {
             scene.background.contents = UIColor(red: 0.02, green: 0.02, blue: 0.05, alpha: 1.0)
         case .xray:
             scene.background.contents = UIColor(red: 0.0, green: 0.05, blue: 0.1, alpha: 1.0)
+        case .roseGold:
+            scene.background.contents = UIColor(red: 0.15, green: 0.1, blue: 0.1, alpha: 1.0)
+        case .crystal:
+            scene.background.contents = UIColor(red: 0.12, green: 0.12, blue: 0.18, alpha: 1.0)
+        case .aurora:
+            scene.background.contents = UIColor(red: 0.02, green: 0.05, blue: 0.1, alpha: 1.0)
+        case .pearl:
+            scene.background.contents = UIColor(red: 0.1, green: 0.1, blue: 0.12, alpha: 1.0)
+        case .galaxy:
+            scene.background.contents = UIColor(red: 0.02, green: 0.01, blue: 0.05, alpha: 1.0)
+        case .sunset:
+            scene.background.contents = UIColor(red: 0.15, green: 0.08, blue: 0.1, alpha: 1.0)
+        case .lavender:
+            scene.background.contents = UIColor(red: 0.1, green: 0.08, blue: 0.15, alpha: 1.0)
+        case .cherryBlossom:
+            scene.background.contents = UIColor(red: 0.12, green: 0.08, blue: 0.1, alpha: 1.0)
         default:
             scene.background.contents = UIColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 1.0)
         }
