@@ -3,8 +3,10 @@ import ARKit
 import SceneKit
 
 struct ARViewContainer: UIViewRepresentable {
-    let meshNode: SCNNode?
+    let meshNodes: [SCNNode]
     @Binding var isPresented: Bool
+    @Binding var currentFrame: Int
+    @Binding var isPlaying: Bool
 
     func makeUIView(context: Context) -> ARSCNView {
         let arView = ARSCNView()
@@ -53,19 +55,20 @@ struct ARViewContainer: UIViewRepresentable {
 
         NSLayoutConstraint.activate([
             instructionLabel.centerXAnchor.constraint(equalTo: arView.centerXAnchor),
-            instructionLabel.bottomAnchor.constraint(equalTo: arView.safeAreaLayoutGuide.bottomAnchor, constant: -50),
+            instructionLabel.bottomAnchor.constraint(equalTo: arView.safeAreaLayoutGuide.bottomAnchor, constant: -100),
             instructionLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 200),
             instructionLabel.heightAnchor.constraint(equalToConstant: 40)
         ])
 
         context.coordinator.arView = arView
-        context.coordinator.meshNode = meshNode
+        context.coordinator.meshNodes = meshNodes
 
         return arView
     }
 
     func updateUIView(_ uiView: ARSCNView, context: Context) {
-        context.coordinator.meshNode = meshNode
+        context.coordinator.meshNodes = meshNodes
+        context.coordinator.updateFrame(currentFrame)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -75,8 +78,11 @@ struct ARViewContainer: UIViewRepresentable {
     class Coordinator: NSObject, ARSCNViewDelegate {
         var parent: ARViewContainer
         var arView: ARSCNView?
-        var meshNode: SCNNode?
-        var placedNode: SCNNode?
+        var meshNodes: [SCNNode] = []
+        var placedNodes: [SCNNode] = []
+        var placementTransform: simd_float4x4?
+        var meshScale: Float = 1.0
+        var yOffset: Float = 0
 
         init(_ parent: ARViewContainer) {
             self.parent = parent
@@ -92,28 +98,29 @@ struct ARViewContainer: UIViewRepresentable {
                 let results = arView.session.raycast(query)
 
                 if let firstResult = results.first {
-                    placeMesh(at: firstResult)
+                    placeMeshes(at: firstResult)
                 }
             }
         }
 
-        func placeMesh(at raycastResult: ARRaycastResult) {
-            guard let arView = arView else { return }
-
-            // Remove existing placed mesh
-            placedNode?.removeFromParentNode()
-
-            // Clone the mesh node
-            guard let originalNode = meshNode else {
-                print("AR: No mesh node available")
+        func placeMeshes(at raycastResult: ARRaycastResult) {
+            guard let arView = arView, !meshNodes.isEmpty else {
+                print("AR: No mesh nodes available")
                 return
             }
 
-            let clonedNode = originalNode.clone()
-            clonedNode.isHidden = false
+            // Remove existing placed meshes
+            for node in placedNodes {
+                node.removeFromParentNode()
+            }
+            placedNodes.removeAll()
 
-            // Get bounding box of the mesh to calculate proper scale and offset
-            let (minBound, maxBound) = clonedNode.boundingBox
+            // Store placement transform for frame updates
+            placementTransform = raycastResult.worldTransform
+
+            // Calculate scale and offset from first mesh
+            let firstNode = meshNodes[0]
+            let (minBound, maxBound) = firstNode.boundingBox
             let meshHeight = maxBound.y - minBound.y
             let meshWidth = maxBound.x - minBound.x
             let meshDepth = maxBound.z - minBound.z
@@ -121,29 +128,27 @@ struct ARViewContainer: UIViewRepresentable {
 
             // Scale to human size (~1.7 meters tall)
             let targetHeight: Float = 1.7
-            let scale = targetHeight / meshSize
-            clonedNode.scale = SCNVector3(scale, scale, scale)
+            meshScale = targetHeight / meshSize
+            yOffset = -minBound.y * meshScale
 
-            // Calculate Y offset so mesh sits ON the ground, not through it
-            // After scaling, the bottom of the mesh should be at Y=0 relative to placement
-            let scaledMinY = minBound.y * scale
-            let yOffset = -scaledMinY  // Lift up so bottom touches ground
+            // Clone and place all mesh nodes
+            for (index, originalNode) in meshNodes.enumerated() {
+                let clonedNode = originalNode.clone()
+                clonedNode.scale = SCNVector3(meshScale, meshScale, meshScale)
 
-            // Position at raycast hit point with Y offset
-            let transform = raycastResult.worldTransform
-            clonedNode.position = SCNVector3(
-                transform.columns.3.x,
-                transform.columns.3.y + yOffset,
-                transform.columns.3.z
-            )
+                let transform = raycastResult.worldTransform
+                clonedNode.position = SCNVector3(
+                    transform.columns.3.x,
+                    transform.columns.3.y + yOffset,
+                    transform.columns.3.z
+                )
 
-            // Add slow rotation animation
-            let rotation = SCNAction.rotateBy(x: 0, y: CGFloat.pi * 2, z: 0, duration: 15)
-            let repeatRotation = SCNAction.repeatForever(rotation)
-            clonedNode.runAction(repeatRotation)
+                // Only show current frame
+                clonedNode.isHidden = (index != parent.currentFrame)
 
-            arView.scene.rootNode.addChildNode(clonedNode)
-            placedNode = clonedNode
+                arView.scene.rootNode.addChildNode(clonedNode)
+                placedNodes.append(clonedNode)
+            }
 
             // Hide instruction label
             if let label = arView.viewWithTag(100) {
@@ -152,7 +157,15 @@ struct ARViewContainer: UIViewRepresentable {
                 }
             }
 
-            print("AR: Placed mesh - size: \(meshSize), scale: \(scale), yOffset: \(yOffset)")
+            print("AR: Placed \(placedNodes.count) mesh frames")
+        }
+
+        func updateFrame(_ frame: Int) {
+            guard !placedNodes.isEmpty else { return }
+
+            for (index, node) in placedNodes.enumerated() {
+                node.isHidden = (index != frame)
+            }
         }
 
         @objc func closeTapped() {
@@ -186,11 +199,95 @@ struct ARViewContainer: UIViewRepresentable {
 }
 
 struct ARViewSheet: View {
-    let meshNode: SCNNode?
+    let meshNodes: [SCNNode]
     @Binding var isPresented: Bool
+    @State private var currentFrame: Int = 0
+    @State private var isPlaying: Bool = true
+    @State private var timer: Timer?
 
     var body: some View {
-        ARViewContainer(meshNode: meshNode, isPresented: $isPresented)
+        ZStack {
+            ARViewContainer(
+                meshNodes: meshNodes,
+                isPresented: $isPresented,
+                currentFrame: $currentFrame,
+                isPlaying: $isPlaying
+            )
             .ignoresSafeArea()
+
+            // Timeline controls at bottom
+            if meshNodes.count > 1 {
+                VStack {
+                    Spacer()
+
+                    VStack(spacing: 12) {
+                        // Frame counter
+                        Text("Frame: \(currentFrame + 1)/\(meshNodes.count)")
+                            .font(.caption)
+                            .foregroundStyle(.white)
+
+                        HStack(spacing: 16) {
+                            // Play/Pause button
+                            Button(action: togglePlay) {
+                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.white)
+                                    .frame(width: 50, height: 44)
+                                    .background(Color.green)
+                                    .cornerRadius(8)
+                            }
+
+                            // Timeline slider
+                            Slider(
+                                value: Binding(
+                                    get: { Double(currentFrame) },
+                                    set: { currentFrame = Int($0) }
+                                ),
+                                in: 0...Double(meshNodes.count - 1),
+                                step: 1
+                            )
+                            .tint(.blue)
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.vertical, 16)
+                    .background(.black.opacity(0.7))
+                    .cornerRadius(16)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 40)
+                }
+            }
+        }
+        .onAppear {
+            startPlayback()
+        }
+        .onDisappear {
+            stopPlayback()
+        }
+    }
+
+    private func togglePlay() {
+        isPlaying.toggle()
+        if isPlaying {
+            startPlayback()
+        } else {
+            stopPlayback()
+        }
+    }
+
+    private func startPlayback() {
+        guard meshNodes.count > 1 else { return }
+        stopPlayback()
+
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            if isPlaying {
+                currentFrame = (currentFrame + 1) % meshNodes.count
+            }
+        }
+    }
+
+    private func stopPlayback() {
+        timer?.invalidate()
+        timer = nil
     }
 }

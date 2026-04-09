@@ -111,7 +111,7 @@ struct ContentView: View {
             viewModel.loadMeshes()
         }
         .fullScreenCover(isPresented: $showARView) {
-            ARViewSheet(meshNode: viewModel.currentMeshNode, isPresented: $showARView)
+            ARViewSheet(meshNodes: viewModel.meshNodes, isPresented: $showARView)
         }
     }
 }
