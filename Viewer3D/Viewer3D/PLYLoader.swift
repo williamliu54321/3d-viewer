@@ -137,11 +137,18 @@ class PLYLoader {
         let geometry = SCNGeometry(sources: [positionSource, colorSource], elements: [element])
 
         let material = SCNMaterial()
+        material.lightingModel = .physicallyBased
         material.diffuse.contents = UIColor.white
+        material.roughness.contents = 0.6
+        material.metalness.contents = 0.0
         material.isDoubleSided = true
+        material.writesToDepthBuffer = true
+        material.readsFromDepthBuffer = true
         geometry.materials = [material]
 
-        return SCNNode(geometry: geometry)
+        let node = SCNNode(geometry: geometry)
+        node.castsShadow = true
+        return node
     }
 
     private static func findHeaderEnd(in data: Data) -> Int? {

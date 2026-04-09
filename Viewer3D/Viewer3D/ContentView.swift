@@ -168,30 +168,61 @@ class SceneViewModel: ObservableObject {
     }
 
     private func setupScene() {
-        scene.background.contents = UIColor(red: 0.1, green: 0.1, blue: 0.18, alpha: 1.0)
+        // Gradient background
+        scene.background.contents = UIColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 1.0)
 
-        // Add lighting
+        // Ambient light - soft fill
         let ambientLight = SCNNode()
         ambientLight.light = SCNLight()
         ambientLight.light?.type = .ambient
-        ambientLight.light?.intensity = 500
+        ambientLight.light?.intensity = 300
+        ambientLight.light?.color = UIColor(red: 0.6, green: 0.65, blue: 0.8, alpha: 1.0)
         scene.rootNode.addChildNode(ambientLight)
 
-        let directionalLight = SCNNode()
-        directionalLight.light = SCNLight()
-        directionalLight.light?.type = .directional
-        directionalLight.light?.intensity = 800
-        directionalLight.position = SCNVector3(5, 5, 5)
-        directionalLight.look(at: SCNVector3(0, 0, 0))
-        scene.rootNode.addChildNode(directionalLight)
+        // Key light - main directional with shadows
+        let keyLight = SCNNode()
+        keyLight.light = SCNLight()
+        keyLight.light?.type = .directional
+        keyLight.light?.intensity = 1000
+        keyLight.light?.color = UIColor(red: 1.0, green: 0.95, blue: 0.9, alpha: 1.0)
+        keyLight.light?.castsShadow = true
+        keyLight.light?.shadowMode = .deferred
+        keyLight.light?.shadowColor = UIColor.black.withAlphaComponent(0.5)
+        keyLight.light?.shadowRadius = 8
+        keyLight.light?.shadowSampleCount = 16
+        keyLight.light?.shadowMapSize = CGSize(width: 2048, height: 2048)
+        keyLight.position = SCNVector3(3, 5, 4)
+        keyLight.look(at: SCNVector3(0, 0, 0))
+        scene.rootNode.addChildNode(keyLight)
 
-        let backLight = SCNNode()
-        backLight.light = SCNLight()
-        backLight.light?.type = .directional
-        backLight.light?.intensity = 400
-        backLight.position = SCNVector3(-5, -5, -5)
-        backLight.look(at: SCNVector3(0, 0, 0))
-        scene.rootNode.addChildNode(backLight)
+        // Fill light - softer, opposite side
+        let fillLight = SCNNode()
+        fillLight.light = SCNLight()
+        fillLight.light?.type = .directional
+        fillLight.light?.intensity = 400
+        fillLight.light?.color = UIColor(red: 0.7, green: 0.8, blue: 1.0, alpha: 1.0)
+        fillLight.position = SCNVector3(-4, 2, 3)
+        fillLight.look(at: SCNVector3(0, 0, 0))
+        scene.rootNode.addChildNode(fillLight)
+
+        // Rim light - edge definition from behind
+        let rimLight = SCNNode()
+        rimLight.light = SCNLight()
+        rimLight.light?.type = .directional
+        rimLight.light?.intensity = 600
+        rimLight.light?.color = UIColor(red: 0.8, green: 0.85, blue: 1.0, alpha: 1.0)
+        rimLight.position = SCNVector3(0, 3, -5)
+        rimLight.look(at: SCNVector3(0, 0, 0))
+        scene.rootNode.addChildNode(rimLight)
+
+        // Ground plane for shadows
+        let groundGeometry = SCNFloor()
+        groundGeometry.reflectivity = 0.05
+        groundGeometry.firstMaterial?.diffuse.contents = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
+        groundGeometry.firstMaterial?.lightingModel = .physicallyBased
+        let groundNode = SCNNode(geometry: groundGeometry)
+        groundNode.position = SCNVector3(0, -1, 0)
+        scene.rootNode.addChildNode(groundNode)
     }
 
     private func setupCamera() {
