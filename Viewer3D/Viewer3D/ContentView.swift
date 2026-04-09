@@ -26,6 +26,12 @@ enum MeshStyle: String, CaseIterable {
     case valorant = "Valorant"
     case persona = "Persona"
     case anime = "Anime"
+    // Proper Toon Shaders (Metal)
+    case toonAnime = "Toon Anime"
+    case toonGame = "Toon Game"
+    case toonCel2 = "Cel 2-Band"
+    case toonCel3 = "Cel 3-Band"
+    case toonComic = "Comic"
 }
 
 struct ContentView: View {
@@ -623,6 +629,32 @@ class SceneViewModel: ObservableObject {
                 material.fresnelExponent = 3.5
                 material.isDoubleSided = true
                 node.opacity = 1.0
+
+            // PROPER TOON SHADERS (using Metal)
+            case .toonAnime:
+                ToonShaderManager.shared.applyToonShader(to: node, style: .animeSkin)
+                node.opacity = 1.0
+                return  // Skip default material application
+
+            case .toonGame:
+                ToonShaderManager.shared.applyToonShader(to: node, style: .gameStylized)
+                node.opacity = 1.0
+                return
+
+            case .toonCel2:
+                ToonShaderManager.shared.applyToonShader(to: node, style: .celShaded2Band)
+                node.opacity = 1.0
+                return
+
+            case .toonCel3:
+                ToonShaderManager.shared.applyToonShader(to: node, style: .celShaded3Band)
+                node.opacity = 1.0
+                return
+
+            case .toonComic:
+                ToonShaderManager.shared.applyToonShader(to: node, style: .comic)
+                node.opacity = 1.0
+                return
             }
 
             geometry.materials = [material]
@@ -664,6 +696,14 @@ class SceneViewModel: ObservableObject {
             scene.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
         case .anime:
             scene.background.contents = UIColor(red: 0.1, green: 0.12, blue: 0.15, alpha: 1.0)
+        case .toonAnime:
+            scene.background.contents = UIColor(red: 0.95, green: 0.93, blue: 0.9, alpha: 1.0)  // Light bg for anime
+        case .toonGame:
+            scene.background.contents = UIColor(red: 0.85, green: 0.9, blue: 0.95, alpha: 1.0)  // Soft blue sky
+        case .toonCel2, .toonCel3:
+            scene.background.contents = UIColor(red: 0.15, green: 0.15, blue: 0.18, alpha: 1.0)
+        case .toonComic:
+            scene.background.contents = UIColor(red: 1.0, green: 1.0, blue: 0.95, alpha: 1.0)  // Paper-like
         default:
             scene.background.contents = UIColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 1.0)
         }

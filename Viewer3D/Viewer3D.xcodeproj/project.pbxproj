@@ -12,6 +12,7 @@
 		A1000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000006 /* Assets.xcassets */; };
 		A1000007 /* PLYLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008 /* PLYLoader.swift */; };
 		A1000030 /* ARViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000031 /* ARViewContainer.swift */; };
+		A1000042 /* ToonShaderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000043 /* ToonShaderManager.swift */; };
 		EFF1C7402F885E4A00DA6F3A /* 00000001.ply in Resources */ = {isa = PBXBuildFile; fileRef = EFF1C72B2F885E4A00DA6F3A /* 00000001.ply */; };
 		EFF1C7412F885E4A00DA6F3A /* 00000016.ply in Resources */ = {isa = PBXBuildFile; fileRef = EFF1C73A2F885E4A00DA6F3A /* 00000016.ply */; };
 		EFF1C7422F885E4A00DA6F3A /* 00000017.ply in Resources */ = {isa = PBXBuildFile; fileRef = EFF1C73B2F885E4A00DA6F3A /* 00000017.ply */; };
@@ -42,6 +43,7 @@
 		A1000010 /* Viewer3D.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viewer3D.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000031 /* ARViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARViewContainer.swift; sourceTree = "<group>"; };
 		A1000032 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000043 /* ToonShaderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToonShaderManager.swift; sourceTree = "<group>"; };
 		EFF1C72A2F885E4A00DA6F3A /* 00000000.ply */ = {isa = PBXFileReference; lastKnownFileType = file; path = 00000000.ply; sourceTree = "<group>"; };
 		EFF1C72B2F885E4A00DA6F3A /* 00000001.ply */ = {isa = PBXFileReference; lastKnownFileType = file; path = 00000001.ply; sourceTree = "<group>"; };
 		EFF1C72C2F885E4A00DA6F3A /* 00000002.ply */ = {isa = PBXFileReference; lastKnownFileType = file; path = 00000002.ply; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 				A1000004 /* ContentView.swift */,
 				A1000008 /* PLYLoader.swift */,
 				A1000031 /* ARViewContainer.swift */,
+				A1000043 /* ToonShaderManager.swift */,
 				A1000006 /* Assets.xcassets */,
 			);
 			path = Viewer3D;
@@ -227,6 +230,7 @@
 				A1000001 /* Viewer3DApp.swift in Sources */,
 				A1000007 /* PLYLoader.swift in Sources */,
 				A1000030 /* ARViewContainer.swift in Sources */,
+				A1000042 /* ToonShaderManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
