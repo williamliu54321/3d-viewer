@@ -630,31 +630,31 @@ class SceneViewModel: ObservableObject {
                 material.isDoubleSided = true
                 node.opacity = 1.0
 
-            // PROPER TOON SHADERS (using Metal)
+            // PROPER TOON SHADERS (using custom shaders)
             case .toonAnime:
                 ToonShaderManager.shared.applyToonShader(to: node, style: .animeSkin)
                 node.opacity = 1.0
-                return  // Skip default material application
+                continue  // Skip default material, go to next node
 
             case .toonGame:
                 ToonShaderManager.shared.applyToonShader(to: node, style: .gameStylized)
                 node.opacity = 1.0
-                return
+                continue
 
             case .toonCel2:
                 ToonShaderManager.shared.applyToonShader(to: node, style: .celShaded2Band)
                 node.opacity = 1.0
-                return
+                continue
 
             case .toonCel3:
                 ToonShaderManager.shared.applyToonShader(to: node, style: .celShaded3Band)
                 node.opacity = 1.0
-                return
+                continue
 
             case .toonComic:
                 ToonShaderManager.shared.applyToonShader(to: node, style: .comic)
                 node.opacity = 1.0
-                return
+                continue
             }
 
             geometry.materials = [material]
