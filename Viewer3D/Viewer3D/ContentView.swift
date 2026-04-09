@@ -19,6 +19,13 @@ enum MeshStyle: String, CaseIterable {
     case sunset = "Sunset"
     case lavender = "Lavender"
     case cherryBlossom = "Cherry Blossom"
+    // Anime/Game styles
+    case genshin = "Genshin"
+    case zelda = "Zelda"
+    case fortnite = "Fortnite"
+    case valorant = "Valorant"
+    case persona = "Persona"
+    case anime = "Anime"
 }
 
 struct ContentView: View {
@@ -551,6 +558,71 @@ class SceneViewModel: ObservableObject {
                 material.fresnelExponent = 1.5
                 material.isDoubleSided = true
                 node.opacity = 1.0
+
+            // ANIME / GAME STYLES
+
+            case .genshin:
+                // Genshin Impact style - soft cel-shading, warm skin, rim light
+                material.lightingModel = .phong
+                material.diffuse.contents = UIColor(red: 1.0, green: 0.88, blue: 0.82, alpha: 1.0)
+                material.specular.contents = UIColor(red: 1.0, green: 0.95, blue: 0.9, alpha: 1.0)
+                material.shininess = 0.15
+                material.emission.contents = UIColor(red: 1.0, green: 0.85, blue: 0.75, alpha: 0.15)
+                material.fresnelExponent = 4.0
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .zelda:
+                // Zelda BOTW style - soft pastel toon
+                material.lightingModel = .phong
+                material.diffuse.contents = UIColor(red: 0.95, green: 0.9, blue: 0.85, alpha: 1.0)
+                material.specular.contents = UIColor(red: 0.9, green: 0.95, blue: 1.0, alpha: 1.0)
+                material.shininess = 0.1
+                material.emission.contents = UIColor(red: 0.85, green: 0.9, blue: 0.95, alpha: 0.2)
+                material.fresnelExponent = 3.0
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .fortnite:
+                // Fortnite style - bold, saturated, plastic-like
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 1.0, green: 0.75, blue: 0.65, alpha: 1.0)
+                material.metalness.contents = 0.0
+                material.roughness.contents = 0.7
+                material.emission.contents = UIColor(red: 0.2, green: 0.15, blue: 0.1, alpha: 0.1)
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .valorant:
+                // Valorant style - clean, sharp, slightly stylized
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 0.95, green: 0.85, blue: 0.8, alpha: 1.0)
+                material.metalness.contents = 0.05
+                material.roughness.contents = 0.5
+                material.emission.contents = UIColor(red: 0.9, green: 0.3, blue: 0.3, alpha: 0.1)
+                material.fresnelExponent = 2.5
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .persona:
+                // Persona 5 style - high contrast, bold reds
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.15, green: 0.1, blue: 0.1, alpha: 1.0)
+                material.emission.contents = UIColor(red: 1.0, green: 0.1, blue: 0.2, alpha: 1.0)
+                material.fresnelExponent = 5.0
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .anime:
+                // Classic anime style - soft skin, clean look
+                material.lightingModel = .phong
+                material.diffuse.contents = UIColor(red: 1.0, green: 0.92, blue: 0.88, alpha: 1.0)
+                material.specular.contents = UIColor(red: 1.0, green: 0.98, blue: 0.95, alpha: 1.0)
+                material.shininess = 0.2
+                material.emission.contents = UIColor(red: 1.0, green: 0.8, blue: 0.75, alpha: 0.1)
+                material.fresnelExponent = 3.5
+                material.isDoubleSided = true
+                node.opacity = 1.0
             }
 
             geometry.materials = [material]
@@ -580,6 +652,18 @@ class SceneViewModel: ObservableObject {
             scene.background.contents = UIColor(red: 0.1, green: 0.08, blue: 0.15, alpha: 1.0)
         case .cherryBlossom:
             scene.background.contents = UIColor(red: 0.12, green: 0.08, blue: 0.1, alpha: 1.0)
+        case .genshin:
+            scene.background.contents = UIColor(red: 0.12, green: 0.15, blue: 0.2, alpha: 1.0)
+        case .zelda:
+            scene.background.contents = UIColor(red: 0.15, green: 0.18, blue: 0.2, alpha: 1.0)
+        case .fortnite:
+            scene.background.contents = UIColor(red: 0.1, green: 0.12, blue: 0.18, alpha: 1.0)
+        case .valorant:
+            scene.background.contents = UIColor(red: 0.08, green: 0.06, blue: 0.1, alpha: 1.0)
+        case .persona:
+            scene.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+        case .anime:
+            scene.background.contents = UIColor(red: 0.1, green: 0.12, blue: 0.15, alpha: 1.0)
         default:
             scene.background.contents = UIColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 1.0)
         }
