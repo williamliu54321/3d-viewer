@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Viewer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #1a1a2e; }
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #4a90d9;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #357abd; }
+        button.active { background: #2d6aa3; }
+        #frame-controls {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        #frame-slider { width: 300px; }
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: sans-serif;
+            font-size: 18px;
+        }
+        .play-btn {
+            background: #27ae60 !important;
+        }
+        .play-btn:hover { background: #219a52 !important; }
+    </style>
+</head>
+<body>
+    <div id="loading">Loading meshes...</div>
+    <div id="info">Frame: <span id="frame-num">0</span>/19</div>
+    <div id="frame-controls">
+        <button class="play-btn" onclick="togglePlay()">▶ Play</button>
+        <input type="range" id="frame-slider" min="0" max="19" value="0">
+    </div>
+    <div id="controls">
+        <button onclick="setView('front')">Front</button>
+        <button onclick="setView('back')">Back</button>
+        <button onclick="setView('left')">Left</button>
+        <button onclick="setView('right')">Right</button>
+        <button onclick="setView('top')">Top</button>
+        <button onclick="setView('bottom')">Bottom</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 2;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        backLight.position.set(-5, -5, -5);
+        scene.add(backLight);
+
+        // Mesh storage
+        const meshes = [];
+        let currentFrame = 0;
+        let isPlaying = false;
+        let lastFrameTime = 0;
+        const frameRate = 10; // fps
+
+        // Load all PLY files
+        const loader = new PLYLoader();
+        const totalFrames = 20;
+        let loadedCount = 0;
+
+        for (let i = 0; i < totalFrames; i++) {
+            const filename = 'meshes/' + String(i).padStart(8, '0') + '.ply';
+            loader.load(filename, (geometry) => {
+                geometry.computeVertexNormals();
+                geometry.center();
+
+                const material = new THREE.MeshStandardMaterial({
+                    vertexColors: geometry.hasAttribute('color'),
+                    color: geometry.hasAttribute('color') ? 0xffffff : 0x4a90d9,
+                    side: THREE.DoubleSide,
+                    metalness: 0.1,
+                    roughness: 0.8
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.visible = (i === 0);
+                meshes[i] = mesh;
+                scene.add(mesh);
+
+                loadedCount++;
+                document.getElementById('loading').textContent = `Loading meshes... ${loadedCount}/${totalFrames}`;
+
+                if (loadedCount === totalFrames) {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            });
+        }
+
+        // Show frame
+        function showFrame(index) {
+            meshes.forEach((mesh, i) => {
+                if (mesh) mesh.visible = (i === index);
+            });
+            currentFrame = index;
+            document.getElementById('frame-num').textContent = currentFrame;
+            document.getElementById('frame-slider').value = currentFrame;
+        }
+
+        // Camera positions
+        const distance = 2;
+        window.setView = function(view) {
+            const positions = {
+                front: [0, 0, distance],
+                back: [0, 0, -distance],
+                left: [-distance, 0, 0],
+                right: [distance, 0, 0],
+                top: [0, distance, 0.01],
+                bottom: [0, -distance, 0.01]
+            };
+            const pos = positions[view];
+            camera.position.set(...pos);
+            camera.lookAt(0, 0, 0);
+            controls.update();
+        };
+
+        // Play/Pause
+        window.togglePlay = function() {
+            isPlaying = !isPlaying;
+            document.querySelector('.play-btn').textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+        };
+
+        // Frame slider
+        document.getElementById('frame-slider').addEventListener('input', (e) => {
+            showFrame(parseInt(e.target.value));
+        });
+
+        // Animation loop
+        function animate(time) {
+            requestAnimationFrame(animate);
+
+            if (isPlaying && meshes.length === totalFrames) {
+                if (time - lastFrameTime > 1000 / frameRate) {
+                    showFrame((currentFrame + 1) % totalFrames);
+                    lastFrameTime = time;
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate(0);
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
