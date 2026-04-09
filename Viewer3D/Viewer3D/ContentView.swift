@@ -2,9 +2,22 @@ import SwiftUI
 import SceneKit
 import ARKit
 
+enum MeshStyle: String, CaseIterable {
+    case original = "Original"
+    case hologram = "Hologram"
+    case wireframe = "Wireframe"
+    case xray = "X-Ray"
+    case toon = "Toon"
+    case chrome = "Chrome"
+    case neon = "Neon"
+    case glitch = "Glitch"
+}
+
 struct ContentView: View {
     @StateObject private var viewModel = SceneViewModel()
     @State private var showARView = false
+    @State private var currentStyle: MeshStyle = .original
+    @State private var showStylePicker = false
 
     var body: some View {
         ZStack {
@@ -18,14 +31,30 @@ struct ContentView: View {
             .ignoresSafeArea()
 
             VStack {
-                // Frame info and AR button
+                // Frame info, style picker, and AR button
                 HStack {
                     Text("Frame: \(viewModel.currentFrame + 1)/\(viewModel.totalFrames)")
                         .foregroundStyle(.white)
                         .padding(8)
                         .background(.black.opacity(0.5))
                         .cornerRadius(8)
+
                     Spacer()
+
+                    // Style picker button
+                    Button(action: { showStylePicker.toggle() }) {
+                        HStack {
+                            Image(systemName: "paintbrush.fill")
+                            Text(currentStyle.rawValue)
+                        }
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.purple)
+                        .cornerRadius(8)
+                    }
 
                     if ARWorldTrackingConfiguration.isSupported && viewModel.totalFrames > 0 {
                         Button(action: { showARView = true }) {
@@ -79,6 +108,43 @@ struct ContentView: View {
                     ViewButton(title: "Bottom") { viewModel.setView(.bottom) }
                 }
                 .padding(.bottom, 30)
+            }
+
+            // Style picker overlay
+            if showStylePicker {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture { showStylePicker = false }
+
+                VStack(spacing: 12) {
+                    Text("Choose Style")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.bottom, 8)
+
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        ForEach(MeshStyle.allCases, id: \.self) { style in
+                            Button(action: {
+                                currentStyle = style
+                                viewModel.applyStyle(style)
+                                showStylePicker = false
+                            }) {
+                                Text(style.rawValue)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(currentStyle == style ? Color.purple : Color.gray.opacity(0.6))
+                                    .cornerRadius(10)
+                            }
+                        }
+                    }
+                }
+                .padding(20)
+                .background(Color(UIColor.systemGray6).opacity(0.95))
+                .cornerRadius(16)
+                .padding(.horizontal, 40)
             }
 
             if viewModel.isLoading {
@@ -321,6 +387,99 @@ class SceneViewModel: ObservableObject {
         cameraNode.position = position
         cameraNode.look(at: SCNVector3(0, 0, 0))
         SCNTransaction.commit()
+    }
+
+    func applyStyle(_ style: MeshStyle) {
+        for node in meshNodes {
+            guard let geometry = node.geometry else { continue }
+
+            let material = SCNMaterial()
+
+            switch style {
+            case .original:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor.white
+                material.roughness.contents = 0.6
+                material.metalness.contents = 0.0
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .hologram:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.0, green: 0.8, blue: 1.0, alpha: 0.7)
+                material.emission.contents = UIColor(red: 0.0, green: 0.5, blue: 0.8, alpha: 1.0)
+                material.transparent.contents = UIColor(white: 1.0, alpha: 0.6)
+                material.isDoubleSided = true
+                material.writesToDepthBuffer = true
+                material.readsFromDepthBuffer = true
+                material.blendMode = .add
+                node.opacity = 0.8
+
+            case .wireframe:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor.black
+                material.emission.contents = UIColor(red: 0.0, green: 1.0, blue: 0.5, alpha: 1.0)
+                material.isDoubleSided = true
+                material.fillMode = .lines
+                node.opacity = 1.0
+
+            case .xray:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.3)
+                material.emission.contents = UIColor(red: 0.3, green: 0.5, blue: 1.0, alpha: 0.5)
+                material.transparent.contents = UIColor(white: 1.0, alpha: 0.4)
+                material.isDoubleSided = true
+                material.blendMode = .alpha
+                material.writesToDepthBuffer = false
+                node.opacity = 0.6
+
+            case .toon:
+                material.lightingModel = .phong
+                material.diffuse.contents = UIColor(red: 1.0, green: 0.6, blue: 0.4, alpha: 1.0)
+                material.specular.contents = UIColor.white
+                material.shininess = 0.1
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .chrome:
+                material.lightingModel = .physicallyBased
+                material.diffuse.contents = UIColor(red: 0.8, green: 0.8, blue: 0.85, alpha: 1.0)
+                material.metalness.contents = 1.0
+                material.roughness.contents = 0.1
+                material.isDoubleSided = true
+                node.opacity = 1.0
+
+            case .neon:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.05, green: 0.05, blue: 0.1, alpha: 1.0)
+                material.emission.contents = UIColor(red: 1.0, green: 0.0, blue: 0.8, alpha: 1.0)
+                material.isDoubleSided = true
+                material.fresnelExponent = 3.0
+                node.opacity = 1.0
+
+            case .glitch:
+                material.lightingModel = .constant
+                material.diffuse.contents = UIColor(red: 0.0, green: 0.1, blue: 0.0, alpha: 1.0)
+                material.emission.contents = UIColor(red: 0.0, green: 1.0, blue: 0.3, alpha: 1.0)
+                material.isDoubleSided = true
+                material.transparency = 0.9
+                node.opacity = 0.95
+            }
+
+            geometry.materials = [material]
+        }
+
+        // Update scene background based on style
+        switch style {
+        case .hologram, .glitch:
+            scene.background.contents = UIColor.black
+        case .neon:
+            scene.background.contents = UIColor(red: 0.02, green: 0.02, blue: 0.05, alpha: 1.0)
+        case .xray:
+            scene.background.contents = UIColor(red: 0.0, green: 0.05, blue: 0.1, alpha: 1.0)
+        default:
+            scene.background.contents = UIColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 1.0)
+        }
     }
 }
 
