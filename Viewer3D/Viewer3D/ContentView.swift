@@ -1,8 +1,10 @@
 import SwiftUI
 import SceneKit
+import ARKit
 
 struct ContentView: View {
     @StateObject private var viewModel = SceneViewModel()
+    @State private var showARView = false
 
     var body: some View {
         ZStack {
@@ -16,7 +18,7 @@ struct ContentView: View {
             .ignoresSafeArea()
 
             VStack {
-                // Frame info
+                // Frame info and AR button
                 HStack {
                     Text("Frame: \(viewModel.currentFrame + 1)/\(viewModel.totalFrames)")
                         .foregroundStyle(.white)
@@ -24,6 +26,22 @@ struct ContentView: View {
                         .background(.black.opacity(0.5))
                         .cornerRadius(8)
                     Spacer()
+
+                    if ARWorldTrackingConfiguration.isSupported && viewModel.totalFrames > 0 {
+                        Button(action: { showARView = true }) {
+                            HStack {
+                                Image(systemName: "arkit")
+                                Text("AR")
+                            }
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.orange)
+                            .cornerRadius(8)
+                        }
+                    }
                 }
                 .padding()
 
@@ -92,6 +110,9 @@ struct ContentView: View {
         .onAppear {
             viewModel.loadMeshes()
         }
+        .fullScreenCover(isPresented: $showARView) {
+            ARViewSheet(meshNode: viewModel.currentMeshNode, isPresented: $showARView)
+        }
     }
 }
 
@@ -128,9 +149,14 @@ class SceneViewModel: ObservableObject {
     @Published var loadedCount = 0
     @Published var errorMessage: String?
 
-    private var meshNodes: [SCNNode] = []
+    private(set) var meshNodes: [SCNNode] = []
     private var timer: Timer?
     private let cameraDistance: Float = 2.0
+
+    var currentMeshNode: SCNNode? {
+        guard currentFrame >= 0 && currentFrame < meshNodes.count else { return nil }
+        return meshNodes[currentFrame]
+    }
 
     // Path to PLY files
     private let meshFolderPath = "/Users/williamliu/IdeaProjects/3d-viewer/meshes"
