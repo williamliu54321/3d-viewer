@@ -112,19 +112,33 @@ struct ARViewContainer: UIViewRepresentable {
             let clonedNode = originalNode.clone()
             clonedNode.isHidden = false
 
-            // Scale down for AR (meshes are usually large)
-            clonedNode.scale = SCNVector3(0.5, 0.5, 0.5)
+            // Get bounding box of the mesh to calculate proper scale and offset
+            let (minBound, maxBound) = clonedNode.boundingBox
+            let meshHeight = maxBound.y - minBound.y
+            let meshWidth = maxBound.x - minBound.x
+            let meshDepth = maxBound.z - minBound.z
+            let meshSize = max(meshHeight, max(meshWidth, meshDepth))
 
-            // Position at raycast hit point
+            // Scale to human size (~1.7 meters tall)
+            let targetHeight: Float = 1.7
+            let scale = targetHeight / meshSize
+            clonedNode.scale = SCNVector3(scale, scale, scale)
+
+            // Calculate Y offset so mesh sits ON the ground, not through it
+            // After scaling, the bottom of the mesh should be at Y=0 relative to placement
+            let scaledMinY = minBound.y * scale
+            let yOffset = -scaledMinY  // Lift up so bottom touches ground
+
+            // Position at raycast hit point with Y offset
             let transform = raycastResult.worldTransform
             clonedNode.position = SCNVector3(
                 transform.columns.3.x,
-                transform.columns.3.y,
+                transform.columns.3.y + yOffset,
                 transform.columns.3.z
             )
 
-            // Add rotation animation
-            let rotation = SCNAction.rotateBy(x: 0, y: CGFloat.pi * 2, z: 0, duration: 10)
+            // Add slow rotation animation
+            let rotation = SCNAction.rotateBy(x: 0, y: CGFloat.pi * 2, z: 0, duration: 15)
             let repeatRotation = SCNAction.repeatForever(rotation)
             clonedNode.runAction(repeatRotation)
 
@@ -138,7 +152,7 @@ struct ARViewContainer: UIViewRepresentable {
                 }
             }
 
-            print("AR: Placed mesh at \(clonedNode.position)")
+            print("AR: Placed mesh - size: \(meshSize), scale: \(scale), yOffset: \(yOffset)")
         }
 
         @objc func closeTapped() {
