@@ -118,8 +118,49 @@ class PLYLoader {
 
         print("PLYLoader: Parsed \(positions.count) vertices, \(indices.count / 3) faces")
 
+        // Calculate smooth normals
+        var normals = [SCNVector3](repeating: SCNVector3(0, 0, 0), count: positions.count)
+
+        // Accumulate face normals for each vertex
+        for i in stride(from: 0, to: indices.count, by: 3) {
+            let i0 = Int(indices[i])
+            let i1 = Int(indices[i + 1])
+            let i2 = Int(indices[i + 2])
+
+            guard i0 < positions.count && i1 < positions.count && i2 < positions.count else { continue }
+
+            let v0 = positions[i0]
+            let v1 = positions[i1]
+            let v2 = positions[i2]
+
+            // Calculate face normal using cross product
+            let edge1 = SCNVector3(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z)
+            let edge2 = SCNVector3(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z)
+
+            let faceNormal = SCNVector3(
+                edge1.y * edge2.z - edge1.z * edge2.y,
+                edge1.z * edge2.x - edge1.x * edge2.z,
+                edge1.x * edge2.y - edge1.y * edge2.x
+            )
+
+            // Add face normal to each vertex of the triangle
+            normals[i0] = SCNVector3(normals[i0].x + faceNormal.x, normals[i0].y + faceNormal.y, normals[i0].z + faceNormal.z)
+            normals[i1] = SCNVector3(normals[i1].x + faceNormal.x, normals[i1].y + faceNormal.y, normals[i1].z + faceNormal.z)
+            normals[i2] = SCNVector3(normals[i2].x + faceNormal.x, normals[i2].y + faceNormal.y, normals[i2].z + faceNormal.z)
+        }
+
+        // Normalize all vertex normals
+        for i in 0..<normals.count {
+            let n = normals[i]
+            let length = sqrt(n.x * n.x + n.y * n.y + n.z * n.z)
+            if length > 0 {
+                normals[i] = SCNVector3(n.x / length, n.y / length, n.z / length)
+            }
+        }
+
         // Create geometry
         let positionSource = SCNGeometrySource(vertices: positions)
+        let normalSource = SCNGeometrySource(normals: normals)
 
         let colorData = Data(bytes: colors, count: colors.count * MemoryLayout<SCNVector3>.stride)
         let colorSource = SCNGeometrySource(
@@ -134,7 +175,7 @@ class PLYLoader {
         )
 
         let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-        let geometry = SCNGeometry(sources: [positionSource, colorSource], elements: [element])
+        let geometry = SCNGeometry(sources: [positionSource, normalSource, colorSource], elements: [element])
 
         let material = SCNMaterial()
         material.lightingModel = .physicallyBased
